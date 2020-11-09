@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import argparse
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,9 +18,9 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=128, metavar='N',
                     help='input batch size for testing (default: 128)')
-parser.add_argument('--epochs', type=int, default=76, metavar='N',
+parser.add_argument('--epochs', type=int, default=200, metavar='N',
                     help='number of epochs to train')
-parser.add_argument('--weight-decay', '--wd', default=2e-4,
+parser.add_argument('--weight-decay', '--wd', default=5e-4,
                     type=float, metavar='W')
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate')
@@ -137,12 +138,12 @@ def eval_test(model, device, test_loader):
 def adjust_learning_rate(optimizer, epoch):
     """decrease the learning rate"""
     lr = args.lr
-    if epoch >= 75:
-        lr = args.lr * 0.1
-    if epoch >= 90:
-        lr = args.lr * 0.01
     if epoch >= 100:
-        lr = args.lr * 0.001
+        lr = args.lr * 0.1
+    if epoch >= 150:
+        lr = args.lr * 0.01
+    # if epoch >= 100:
+    #     lr = args.lr * 0.001
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
@@ -151,18 +152,22 @@ def main():
     # init model, ResNet18() can be also used here for training
     model = WideResNet().to(device)
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-
+    train_time = 0
     for epoch in range(1, args.epochs + 1):
+        start_epoch_time = time.time()
         # adjust learning rate for SGD
         adjust_learning_rate(optimizer, epoch)
 
         # adversarial training
         train(args, model, device, train_loader, optimizer, epoch)
-
+        end_epoch_time = time.time()
+        epoch_time = end_epoch_time - start_epoch_time
+        train_time += epoch_time
         # evaluation on natural examples
         print('================================================================')
         eval_train(model, device, train_loader)
         eval_test(model, device, test_loader)
+        print('Time used: {}'.format(epoch_time))
         print('================================================================')
 
         # save checkpoint
@@ -171,7 +176,7 @@ def main():
                        os.path.join(model_dir, 'model-wideres-epoch{}.pt'.format(epoch)))
             torch.save(optimizer.state_dict(),
                        os.path.join(model_dir, 'opt-wideres-checkpoint_epoch{}.tar'.format(epoch)))
-
+    print('Total time used: {}'.format(train_time/60.))
 
 if __name__ == '__main__':
     main()
