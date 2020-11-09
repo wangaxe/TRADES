@@ -19,11 +19,11 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=128, metavar='N',
                     help='input batch size for testing (default: 128)')
-parser.add_argument('--epochs', type=int, default=50, metavar='N',
+parser.add_argument('--epochs', type=int, default=100, metavar='N',
                     help='number of epochs to train')
 parser.add_argument('--weight-decay', '--wd', default=5e-4,
                     type=float, metavar='W')
-parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate')
 parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                     help='SGD momentum')
@@ -139,9 +139,9 @@ def eval_test(model, device, test_loader):
 def adjust_learning_rate(optimizer, epoch):
     """decrease the learning rate"""
     lr = args.lr
-    if epoch+1 >= 25:
+    if epoch+1 >= 50:
         lr = args.lr * 0.1
-    if epoch+1 >= 40:
+    if epoch+1 >= 80:
         lr = args.lr * 0.01
     # if epoch >= 100:
     #     lr = args.lr * 0.001
@@ -151,8 +151,8 @@ def adjust_learning_rate(optimizer, epoch):
 
 def main():
     # init model, ResNet18() can be also used here for training
-    model = PreActResNet18().to(device)
-    # model = WideResNet().to(device)
+    # model = PreActResNet18().to(device)
+    model = WideResNet().to(device)
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     train_time = 0
     for epoch in range(1, args.epochs + 1):
